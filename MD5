@@ -1,7 +1,7 @@
-a8f55d686fc8650e467ebb30f63fe744 *DESCRIPTION
+e6ca0e2c8d86259f587631e70a493c58 *DESCRIPTION
 530ad6f63c9d2babcb7ea0afc8c7d400 *INSTALL
 50302128b0220cb1ba40f1cd7dcb7e21 *LICENSE
-cb890404e42ff7ea678d7cc9106502d6 *NAMESPACE
+8f7a8bdeec7c259a5efc7dd66c01d315 *NAMESPACE
 e99450d5947d0f1b083e095009036855 *NEWS
 47b9d7dab5317804872197eb4501e9a4 *R/Attribute.R
 b7107b3ba5c67c177609244dff2ab7d5 *R/CommonFG-DataSet.R
@@ -9,7 +9,7 @@ b7107b3ba5c67c177609244dff2ab7d5 *R/CommonFG-DataSet.R
 ccb3af912f11e705f6ed84299256bdba *R/CommonFG.R
 273df1590d946197d66ec178f5ebbb9e *R/DataSet.R
 4546413289da7ab506926d07b9d53e39 *R/DataSpace.R
-3439215666cfd096cfab6ddd727ed263 *R/Dataset-Extend.R
+4bc9ebc10ee3532595a194c75a2df37d *R/Dataset-Extend.R
 45b22ec37ec05c21833949fed51a3ff1 *R/Dataset-Subset.R
 6f4305837d2f8f69d55402a2791fa9df *R/H5File.R
 a5e68a757a66d2f029356d093b78c518 *R/H5Group.R
@@ -19,14 +19,16 @@ a5e68a757a66d2f029356d093b78c518 *R/H5Group.R
 be944482b1caa703bc509c85bb070a9f *R/h5-package.R
 65bdfe2f0c81b5f9755ce0897f80fae7 *configure
 92bc59677581a519a412999024012f2d *configure.ac
+d41d8cd98f00b204e9800998ecf8427e *configure.win
 2be28daacf78ab5f10c702856a13c2b2 *inst/COPYRIGHTS
+c2b43d2f84943ddbd6644c9e9b2ae703 *inst/NEWS.Rd
 0b8805fdbaa07afbf5a06c420bac1fd9 *inst/benchmark/benchmark-BigSet.R
 43fd25ed09b99b2b4cd851db125478ba *inst/include/h5.h
 55d42f0714e4e6252112d93a0319b16a *man/Attribute.Rd
 85fd7a51e487a7a20362e59e6c14e615 *man/CommonFG-DataSet.Rd
 82ad6f37b32b394e75a71a6fdfd90d89 *man/CommonFG-Group.Rd
 4a8ecc3771ee83e3508c8d74c6217e6a *man/CommonFG.Rd
-bdcc6665f759293ad5d5a1ecf542d0c6 *man/DataSet-Extend.Rd
+fcf408a13253f826fcc6f6e105ef46fc *man/DataSet-Extend.Rd
 88f84e7d0a965da66f338cb1eb67372a *man/DataSet-Subset.Rd
 41d2edc40519a76ca7ea7bbb71591ba7 *man/DataSet.Rd
 e6612fd7dee7f618fc64acded63ce18d *man/DataSpace.Rd
@@ -58,6 +60,6 @@ b41ab14fd2113cc9669e3a33c27f94f5 *tests/testthat/test-DataSet-Select-Subset.R
 d4d2f0045f4a405b9daad826885cd5b9 *tests/testthat/test-DataSet-extend.R
 a9cbb20ed2238de3230d1430e14111bb *tests/testthat/test-DataSet.R
 9f65fedbe913dd84c21dd4f38da9897d *tests/testthat/test-H5File-Subset.R
-d92e43a4cec98bdca9798c652e0f2a89 *tests/testthat/test-H5File.R
+7729c3d90c3b68a5d3b0547d804df849 *tests/testthat/test-H5File.R
 6929d6b082a6c3fb8933479250371a16 *tests/testthat/test-H5Group.R
 e7f3bc079036fff4d5daa5e6070aa5db *tests/testthat/test-io.R
