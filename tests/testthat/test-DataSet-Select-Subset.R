@@ -6,14 +6,14 @@ test_that("DataSet-Select-Subset-params",{
   testmat_n <- matrix(as.integer(1:90), ncol = 9)
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testmat_n", testmat_n)
   h5close(dset1)
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testmat_n")
   
@@ -43,14 +43,14 @@ test_that("DataSet-Select-Subset-params",{
   h5close(dset1)
   h5close(group)
   h5close(file)
-  
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-vector-read",{  
   testvec_n <- as.integer(1:90)
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testvec_n", testvec_n)
   h5close(dset1)
@@ -68,7 +68,7 @@ test_that("DataSet-Select-Subset-vector-read",{
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testvec_n")
   
@@ -88,6 +88,7 @@ test_that("DataSet-Select-Subset-vector-read",{
   h5close(dset2)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-read-string", { 
@@ -99,32 +100,64 @@ test_that("DataSet-Select-Subset-read-string", {
       arr[1, 1, 1] <- "blablabla"
           
       if(file.exists(fname)) file.remove(fname)
-      file <- H5File(fname)
-      file["test", "testvec"] <- LETTERS[1:9]
-      file["test/testmat", "testmat"] <- mat
-      file["test", "testarray"] <- arr
+      file <- h5file(fname)
+      file["test/testvec"] <- LETTERS[1:9]
+      file["test/testmat/testmat"] <- mat
+      file["test/testarray"] <- arr
       h5close(file)
       
-      file <- H5File(fname, "r")
-      testvec <- file["test", "testvec"]
+      file <- h5file(fname, "r")
+      testvec <- file["test/testvec"]
       expect_that(testvec[1:3], is_identical_to(LETTERS[1:3]))
       h5close(testvec)
       
-      testmat <- file["test/testmat", "testmat"]
+      testmat <- file["test/testmat/testmat"]
       expect_that(testmat[1:2, ], is_identical_to(mat[1:2, ]))
       h5close(testmat)
       
-      testarray <- file["test", "testarray"]
+      testarray <- file["test/testarray"]
       expect_that(testarray[], is_identical_to(arr))
       h5close(testarray)
       h5close(file)
+      expect_that(file.remove(fname), is_true())
 })
+
+test_that("DataSet-Select-Subset-read-string-fixed", { 
+      vec <- paste0(LETTERS[1:9], c(LETTERS[1:9]))
+      vec[1] <- "AAA"
+      mat <- matrix(LETTERS[1:9], nrow = 3)
+      arr <- array(paste0(LETTERS[rep(1, 45)], c(LETTERS[rep(1, 45)])), 
+          dim = c(3, 3, 5))
+      arr[1, 1, 1] <- "blablabla"
+      
+      if(file.exists(fname)) file.remove(fname)
+      file <- h5file(fname)
+      file["test/testvec", size = 1] <- LETTERS[1:9]
+      file["test/testmat/testmat", size = 1] <- mat
+      file["test/testarray", size = max(nchar(as.vector(arr)))] <- arr
+      h5close(file)
+      
+      file <- h5file(fname, "r")
+      testvec <- file["test/testvec"]
+      expect_that(testvec[1:3], is_identical_to(LETTERS[1:3]))
+      h5close(testvec)
+      
+      testmat <- file["test/testmat/testmat"]
+      expect_that(testmat[1:2, ], is_identical_to(mat[1:2, ]))
+      h5close(testmat)
+      
+      testarray <- file["test/testarray"]
+      expect_that(testarray[], is_identical_to(arr))
+      h5close(testarray)
+      h5close(file)
+      expect_that(file.remove(fname), is_true())
+    })
       
 test_that("DataSet-Select-Subset-vector-write",{  
   testvec_n <- as.integer(1:90)
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testvec_n", testvec_n)
   h5close(dset1)
@@ -149,7 +182,7 @@ test_that("DataSet-Select-Subset-vector-write",{
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testvec_n")
   
@@ -173,13 +206,14 @@ test_that("DataSet-Select-Subset-vector-write",{
   h5close(dset2)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-matrix-read",{  
   testmat_n <- matrix(as.integer(1:90), ncol = 9)
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testmat_n", testmat_n)
   h5close(dset1)
@@ -201,7 +235,7 @@ test_that("DataSet-Select-Subset-matrix-read",{
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testmat_n")
   
@@ -225,13 +259,14 @@ test_that("DataSet-Select-Subset-matrix-read",{
   h5close(dset1)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-matrix-write",{  
   testmat_n <- matrix(as.integer(1:90), ncol = 9)
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testmat_n", testmat_n)
   dset2 <- createDataSet(group, "testmat_n2", testmat_n)
@@ -284,7 +319,7 @@ test_that("DataSet-Select-Subset-matrix-write",{
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testmat_n")
   dset2 <- openDataSet(group, "testmat_n2")
@@ -308,6 +343,7 @@ test_that("DataSet-Select-Subset-matrix-write",{
   h5close(dset1)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-array-read",{  
@@ -315,7 +351,7 @@ test_that("DataSet-Select-Subset-array-read",{
   subarray <- array(as.integer(-100:-120), dim = c(2, 2, 5))
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testmat_n", testmat_n)
   h5close(dset1)
@@ -343,7 +379,7 @@ test_that("DataSet-Select-Subset-array-read",{
   h5close(group)
   h5close(file)
 
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testmat_n")
   
@@ -377,6 +413,7 @@ test_that("DataSet-Select-Subset-array-read",{
   h5close(dset1)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })
 
 test_that("DataSet-Select-Subset-array-write",{  
@@ -384,7 +421,7 @@ test_that("DataSet-Select-Subset-array-write",{
   subarray <- array(as.integer(-100:-120), dim = c(2, 2, 5))
   
   if(file.exists(fname)) file.remove(fname)
-  file <- new( "H5File", fname, "a")
+  file <- h5file(fname, "a")
   group <- createGroup(file, "/testgroup")
   dset1 <- createDataSet(group, "testmat_n", testmat_n)
   dset2 <- createDataSet(group, "testmat_n2", testmat_n)
@@ -443,7 +480,7 @@ test_that("DataSet-Select-Subset-array-write",{
   h5close(group)
   h5close(file)
   
-  file <- new( "H5File", fname, "r")
+  file <- h5file(fname, "r")
   group <- openGroup(file, "/testgroup")
   dset1 <- openDataSet(group, "testmat_n")
   dset2 <- openDataSet(group, "testmat_n2")
@@ -467,4 +504,5 @@ test_that("DataSet-Select-Subset-array-write",{
   h5close(dset1)
   h5close(group)
   h5close(file)
+  expect_that(file.remove(fname), is_true())
 })

@@ -17,13 +17,21 @@
 #' 		\item{character}{Variable--length character strings.}                      
 #'  }                                                                           
 #' @param dimensions integer; Dimensions of dataset to be created.              
-#' @param chunksize integer; Chunksize to be used for dataset.                  
-#' @param maxdimensions integer; Maximum dimensions used for dataset, NA is     
-#' mapped to 'unlimited'.                                                       
+#' @param chunksize integer; Chunksize to be used for dataset. If set to 
+#' \code{NA}, chunking is disabled for dataset; \code{maxdimensionions} and 
+#' \code{compression} have no effect and extensions of DataSet (e.g. through 
+#' \code{cbind}, \code{rbind}) are not possible.              
+#' @param maxdimensions integer; Maximum dimensions used for dataset, \code{NA} 
+#' sets maxdimensions to 'unlimited'.                                                       
 #' @param compression integer; Default GZIP compression level to be used, from  
 #' 0 (no compression) to 9 (maximum compression), defaults to \code{4}.         
-#' @param size integer; Size of data type to be used, only relevant for character   
-#' strings.                                                                     
+#' @param size numeric; Character length for fixed-length string data types.
+#' Default value of -1 creates variable-length strings.
+#' @param path character; Relative path to .Object.
+#' @param full.names character; Specify if absolute DataSet path names should be
+#' returned.
+#' @param recursive logical; Specify DatSets should be retrieved recursively
+#' from .Object.                                                      
 #' @name CommonFG-DataSet                                                         
 #' @rdname CommonFG-DataSet                                                             
 #' @include CommonFG.R
@@ -31,8 +39,8 @@
 #' @export                                                                      
 setGeneric("createDataSet", function(
         .Object, datasetname, data, type, dimensions, 
-        chunksize = ChunkSize(data), 
-        maxdimensions = rep(NA_integer_, length(GetDimensions(data))), 
+        chunksize = -1, 
+        maxdimensions = NA_integer_, 
         compression = 4L, size = -1)
       standardGeneric("createDataSet")
 )
@@ -41,16 +49,33 @@ setGeneric("createDataSet", function(
 #' @export
 setMethod("createDataSet", signature(.Object="CommonFG", 
         datasetname = "character", 
-        data = "missing", type = "character", dimensions = "integer", 
+        data = "missing", type = "character", dimensions = "ANY", 
         chunksize = "ANY", maxdimensions = "ANY", 
         compression = "ANY", size = "ANY"), 
     function(.Object, datasetname, type, dimensions, chunksize, maxdimensions, 
         compression, size) {
       
-      stopifnot(type %in% c("double", "integer", "logical", "character"))
-      typechar <- substr(type, 1, 1)	
+      stopifnot(!missing(dimensions))
+      stopifnot(type %in% c("double", "integer", "logical", "character", 
+              "vlen-double", "vlen-integer", "vlen-logical", "vlen-character"))
+      typechar <- if(type == "vlen-double") {
+        "x"
+      } else if (type == "vlen-integer") {
+        "y"
+      } else if (type == "vlen-logical") {
+        stop("Type 'vlen-logical' not supported yet.")
+      } else if (type == "vlen-character") {
+        stop("Type 'vlen-character' not supported yet.")
+      } else {
+        substr(type, 1, 1)	
+      }
+
+      # Set ChunkSize to default
+      if(!is.na(chunksize)[1] & chunksize[1] == -1 & length(chunksize) == 1) {
+        chunksize = dimensions
+      }
       
-      createDataset_internal(.Object@pointer, datasetname, typechar, dimensions,
+      createDataset_internal(.Object, datasetname, typechar, dimensions,
           chunksize, maxdimensions, compression, size) 
     })
 
@@ -58,26 +83,66 @@ setMethod("createDataSet", signature(.Object="CommonFG",
 #' @export
 setMethod("createDataSet", signature(.Object="CommonFG", 
         datasetname = "character", data = "ANY", type = "missing", 
-        dimensions = "missing", chunksize = "ANY",maxdimensions = "ANY", 
+        dimensions = "missing", chunksize = "ANY", maxdimensions = "ANY", 
+        compression = "ANY", size = "numeric"), 
+  function(.Object, datasetname, data, chunksize, maxdimensions, 
+      compression, size) {
+    if(missing(data)) {
+      stop("Parameter data must be specified.")
+    }
+    # workaround for Bug_AttributeGroupSubset
+    if( inherits(data, "DataSet")) {
+      return(data)
+    }
+
+    # Set Maxdimensions to default
+    if(is.na(maxdimensions)[1] && length(maxdimensions) == 1) {
+      maxdimensions = rep(NA_integer_, length(GetDimensions(data)))
+    }
+    # Set ChunkSize to default
+    if(!is.na(chunksize)[1] & chunksize[1] == -1 & length(chunksize) == 1) {
+      chunksize = ChunkSize(data)
+    }
+
+    stopifnot(length(maxdimensions) == length(GetDimensions(data)))
+    
+    dspace <- GetDataSpace(data)
+
+    dset <- createDataset_internal(.Object, datasetname, 
+        dspace$typechar, dspace$dim, chunksize, maxdimensions, compression, 
+        size)
+    
+    writeDataSet(dset, data)
+    dset
+  })
+
+#' @rdname CommonFG-DataSet
+#' @export
+setMethod("createDataSet", signature(.Object="CommonFG", 
+        datasetname = "character", data = "ANY", type = "missing", 
+        dimensions = "missing", chunksize = "ANY", maxdimensions = "ANY", 
         compression = "ANY", size = "missing"), 
-    function(.Object, datasetname, data, chunksize, maxdimensions, 
-        compression) {
-      if(missing(data)) {
-        stop("Parameter data must be specified.")
-      }
-      stopifnot(length(maxdimensions) == length(GetDimensions(data)))
-      
-      dspace <- GetDataSpace(data)
-      dset <- createDataset_internal(.Object@pointer, datasetname, 
-          dspace$typechar, dspace$dim, chunksize, maxdimensions, compression, 
-          dspace$size)
-      
-      writeDataSet(dset, data)
-      dset
-    })
+  function(.Object, datasetname, data, chunksize, maxdimensions, 
+      compression) {
+    
+    if(missing(data)) {
+      stop("Parameter data must be specified.")
+    }
+    
+    # workaround for Bug_AttributeGroupSubset
+    if( inherits(data, "DataSet")) {
+      return(data)
+    }
+    dspace <- GetDataSpace(data)
+    size <- dspace$size
+    createDataSet(.Object, datasetname, data, chunksize = chunksize, 
+        maxdimensions = maxdimensions, compression = compression, size = size)
+    
+  })
+
 
 checkChunksize <- function(chunksize) {
-  if (!(is.numeric(chunksize) | is.integer(chunksize))) {
+  if (!(is.numeric(chunksize) | is.integer(chunksize) | is.na(chunksize[1]))) {
     stop("Parameter chunksize must be of type integer/numeric.")
   }
   if (!all((chunksize > 0) | is.na(chunksize))) {
@@ -110,8 +175,13 @@ checkCompression <- function(compression) {
   
 }
 
-createDataset_internal <- function(loc, datasetname, typechar, dimensions, 
+#' @importFrom methods new
+createDataset_internal <- function(.Object, datasetname, typechar, dimensions, 
     chunksize, maxdimensions, compression, size) {
+  
+  if(existsDataSet(.Object, datasetname)) {
+    stop("Dataset with the same name existing at location.")
+  }
   checkChunksize(chunksize)
   checkMaxDimensions(maxdimensions)
   chunksize <- ifelse(!is.na(maxdimensions) & (is.na(chunksize) | 
@@ -121,8 +191,7 @@ createDataset_internal <- function(loc, datasetname, typechar, dimensions,
     stop("Parameter maxdimensions must be equal or exceed data dimension size.")
   } 
   checkCompression(compression)
-  
-  dsetptr <- CreateDataset(loc, datasetname, typechar, dimensions,
+  dsetptr <- CreateDataset(.Object@pointer, datasetname, typechar, dimensions,
       chunksize, maxdimensions, compression, size)
   
   new("DataSet", dsetptr, datasetname, typechar)
@@ -135,6 +204,7 @@ setGeneric("openDataSet", function(.Object, datasetname, type)
 )
 
 #' @rdname CommonFG-DataSet
+#' @importFrom methods new
 #' @export
 setMethod("openDataSet", signature(.Object="CommonFG", 
         datasetname = "character"), 
@@ -142,3 +212,68 @@ setMethod("openDataSet", signature(.Object="CommonFG",
       dsetptr <- OpenDataset(.Object@pointer, datasetname)
       dset <- new("DataSet", dsetptr, datasetname, GetDataSetType(dsetptr))
     })
+
+#' @rdname CommonFG-DataSet
+#' @export
+setGeneric("list.datasets", function(.Object, path = "/", 
+        full.names = TRUE, recursive = TRUE)
+      standardGeneric("list.datasets")
+)
+
+#' @rdname CommonFG-DataSet
+#' @export
+setMethod("list.datasets", signature(.Object="CommonFG"), 
+  function(.Object, path, full.names, recursive) {
+    if (!existsGroup(.Object, path)) {
+      stop("Specified path does not exist")
+    }
+    # Set full path
+    path.full <- path
+    if(inherits(.Object, "H5Group")) {
+      path.full <- paste(path.full, .Object@location, sep = "/")
+      path.full <- gsub("/+", "/", path.full)
+    }
+    
+    groups <- path.full
+    if(recursive) {
+      groups <- c(path.full, list.groups(.Object, path, TRUE, recursive = recursive))
+    }
+    
+    dsets <- lapply(groups, function(x) GetDataSetNames(.Object@pointer, x))
+    dsetlen <- sapply(dsets, length)
+    # Filter for groups which contain datasets
+    groups <- groups[dsetlen > 0]
+    dsets <- dsets[dsetlen > 0]
+    
+    if(length(dsets) > 0) {
+      if(full.names) {
+        dsets <- lapply(1:length(groups), 
+                function(i) paste(groups[i], dsets[[i]], sep = "/"))
+      }
+      dsets <- unlist(dsets)
+      dsets <- gsub("/+", "/", dsets) # just to make sure...
+    } else {
+      dsets <- character(0)
+    }
+    dsets
+  })
+
+#' @rdname CommonFG-DataSet
+#' @export
+setGeneric("existsDataSet", function(.Object, datasetname)
+      standardGeneric("existsDataSet")
+)
+
+#' @rdname CommonFG-DataSet
+#' @export
+setMethod( "existsDataSet", signature(.Object="CommonFG", 
+        datasetname = "character"), 
+  function(.Object, datasetname) {
+    gname <- sub("^\\.$", "/", dirname(datasetname))
+    if(!existsGroup(.Object, gname)) {
+      return(FALSE)
+    }
+    basename(datasetname) %in% 
+    list.datasets(.Object, gname, full.names = FALSE, recursive = FALSE)
+  })
+

@@ -5,10 +5,14 @@
 \alias{H5File}
 \alias{H5File-class}
 \alias{h5close,H5File-method}
+\alias{h5file}
 \alias{h5flush}
 \alias{h5flush,H5File-method}
+\alias{is.h5file}
 \title{The H5File Class}
 \usage{
+h5file(name, mode = "a")
+
 H5File(name, mode = "a")
 
 h5flush(.Object)
@@ -16,12 +20,14 @@ h5flush(.Object)
 \S4method{h5flush}{H5File}(.Object)
 
 \S4method{h5close}{H5File}(.Object)
+
+is.h5file(name)
 }
 \arguments{
 \item{name}{character; File path pointing to H5File.}
 
 \item{mode}{mode used for file.
-The following modes are supported by H5File:
+The following modes are supported by h5file:
 \describe{
   \item{r}{Read only, file must exist.}
   \item{r+}{Read/write, file must exist.}
@@ -40,7 +46,7 @@ base class.
 }
 \details{
 HDF5 files can be opened or generated using the \code{H5File()} function and
-a specified file access mode. \code{H5File()} returns a \code{H5File} object
+a specified file access mode. \code{h5file()} returns a \code{H5File} object
 which can be used to access \code{\link{H5Group}}s and \code{\link{DataSet}}s
 using subsetting parameters or functions accordingly.
 
@@ -51,10 +57,10 @@ to be closed afterwards using \code{h5close()}.
 }
 \examples{
 # Create new file using mode 'a'
-file <- H5File("test.h5")
+file <- h5file("test.h5")
 h5close(file)
 # Open File for read-only
-file <- H5File("test.h5", "r")
+file <- h5file("test.h5", "r")
 h5close(file)
 file.remove("test.h5")
 }

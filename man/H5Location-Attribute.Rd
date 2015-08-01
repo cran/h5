@@ -11,13 +11,16 @@
 \alias{h5attr,H5Location,character-method}
 \alias{h5attr<-}
 \alias{h5attr<-,H5Location,character-method}
+\alias{list.attributes}
+\alias{list.attributes,H5Location-method}
 \alias{openAttribute}
 \alias{openAttribute,H5Location,character-method}
 \title{Read and Create Attributes for H5Location Objects}
 \usage{
-createAttribute(.Object, attributename, data)
+createAttribute(.Object, attributename, data, size = -1)
 
-\S4method{createAttribute}{H5Location,character}(.Object, attributename, data)
+\S4method{createAttribute}{H5Location,character}(.Object, attributename, data,
+  size = -1)
 
 openAttribute(.Object, attributename)
 
@@ -27,9 +30,13 @@ h5attr(.Object, attributename)
 
 \S4method{h5attr}{H5Location,character}(.Object, attributename)
 
-h5attr(.Object, attributename) <- value
+h5attr(.Object, attributename, ...) <- value
 
-\S4method{h5attr}{H5Location,character}(.Object, attributename) <- value
+\S4method{h5attr}{H5Location,character}(.Object, attributename, ...) <- value
+
+list.attributes(.Object)
+
+\S4method{list.attributes}{H5Location}(.Object)
 }
 \arguments{
 \item{.Object}{H5Location; S4 object of class \code{H5Location};}
@@ -38,6 +45,11 @@ h5attr(.Object, attributename) <- value
 
 \item{data}{object; Data object to be used for attribute creation,
 can be either of type vector, matrix or array.}
+
+\item{size}{numeric; Character length for fixed-length string data types.
+Default value of -1 creates variable-length strings.}
+
+\item{...}{Additional parameters passed to \code{\link{createAttribute}}.}
 
 \item{value}{object; Object to be stored in HDF5 Attribute, can be either of
 type vector, matrix or array.}
@@ -49,13 +61,13 @@ methods to create and access attributes for inherited classes.
 }
 \examples{
 # Write Attributes for H5File, H5Group and DataSet
-file <- H5File("test.h5")
+file <- h5file("test.h5")
 h5attr(file, "fileattrib") <- 1:10
 group <- file["testgroup"]
 h5attr(group, "groupattrib") <- matrix(1:9, nrow = 3)
 h5attr(group, "groupattrib")
-group[, "testdataset"] <- 1:10
-dset <- group[, "testdataset"]
+group["testdataset"] <- 1:10
+dset <- group["testdataset"]
 h5attr(dset, "dsetattrib") <- LETTERS[1:10]
 h5close(dset)
 h5close(group)

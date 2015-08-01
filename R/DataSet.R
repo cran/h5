@@ -89,7 +89,7 @@ setMethod( "initialize", "DataSet",
                       compression = GetDataSetCompression(location)) {
 			.Object@pointer = location
       .Object@name = datasetname
-			.Object@datatype = datatype
+      .Object@datatype = datatype
       .Object@dim = dim      
       .Object@maxdim = maxdim   
       .Object@chunksize = chunksize
@@ -99,24 +99,41 @@ setMethod( "initialize", "DataSet",
 
 setMethod("show", "DataSet",
   function(object) {
-      dimstring <- paste(object@dim, collapse = " x ")
-      typestring <- switch(object@datatype, i = "integer", d = "numeric", 
-          c = "character", "unknown")
-      maxdimstring <- ifelse(object@maxdim > 1.844674e+19, "UNLIMITED", 
-          format(object@maxdim, "%.5g"))
-      if(all(maxdimstring == "UNLIMITED")) maxdimstring <- maxdimstring[1]
-      maxdimstring <- paste(maxdimstring, collapse = " x ")
-      chunksizestring <- paste(sprintf("%.5g", object@chunksize), 
-          collapse = " x ")
-      cat(sprintf("DataSet '%s' (%s)\n", object@name, dimstring))
-      cat(sprintf("type: %s\n", typestring))
-      cat(sprintf("chunksize: %s\n", chunksizestring))
-      cat(sprintf("maxdim: %s\n", maxdimstring))
-      cat(sprintf("compression: %s\n", object@compression))
-    })
+    dimstring <- paste(sprintf("%.5g", object@dim), collapse = " x ")
+    typestring <- switch(object@datatype, 
+                    i = "integer", 
+                    d = "numeric", 
+                    c = "character", 
+                    l = "logical", 
+                    x = "vlen-double",
+                    y = "vlen-integer",
+                    z = "vlen-logical",
+                    "unknown")
+    maxdimstring <- ifelse(object@maxdim >= 1.844674e+19, "UNLIMITED", 
+        sprintf("%.5g", object@maxdim))
+    if(all(maxdimstring == "UNLIMITED")) maxdimstring <- maxdimstring[1]
+    maxdimstring <- paste(maxdimstring, collapse = " x ")
+    chunksizestring <- paste(sprintf("%.5g", object@chunksize), 
+        collapse = " x ")
+    cat(sprintf("DataSet '%s' (%s)\n", object@name, dimstring))
+    cat(sprintf("type: %s\n", typestring))
+    cat(sprintf("chunksize: %s\n", chunksizestring))
+    cat(sprintf("maxdim: %s\n", maxdimstring))
+    cat(sprintf("compression: %s\n", object@compression))
+    
+    at <- sort(list.attributes(object))
+    if(length(at) > 0) {
+      cat("Attributes:\n")
+      cat(paste(sprintf("  A %s", at), collapse = "\n"))
+    }
+  })
 
 #' @rdname DataSet
 #' @export
 setMethod("h5close", "DataSet", function(.Object) {
       invisible(CloseDataset(.Object@pointer))
     })
+
+
+
+

@@ -256,38 +256,50 @@ BEGIN_RCPP
 END_RCPP
 }
 // GetDataspace
-XPtr<DataSpace> GetDataspace(XPtr<DataSet> dataset, NumericVector offset, NumericVector count);
-RcppExport SEXP h5_GetDataspace(SEXP datasetSEXP, SEXP offsetSEXP, SEXP countSEXP) {
+XPtr<DataSpace> GetDataspace(XPtr<DataSet> dataset);
+RcppExport SEXP h5_GetDataspace(SEXP datasetSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< XPtr<DataSet> >::type dataset(datasetSEXP);
+    __result = Rcpp::wrap(GetDataspace(dataset));
+    return __result;
+END_RCPP
+}
+// SelectHyperslab
+XPtr<DataSpace> SelectHyperslab(XPtr<DataSpace> dataspace, NumericVector offset, NumericVector count, string seloper);
+RcppExport SEXP h5_SelectHyperslab(SEXP dataspaceSEXP, SEXP offsetSEXP, SEXP countSEXP, SEXP seloperSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< XPtr<DataSpace> >::type dataspace(dataspaceSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type offset(offsetSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type count(countSEXP);
-    __result = Rcpp::wrap(GetDataspace(dataset, offset, count));
+    Rcpp::traits::input_parameter< string >::type seloper(seloperSEXP);
+    __result = Rcpp::wrap(SelectHyperslab(dataspace, offset, count, seloper));
     return __result;
 END_RCPP
 }
-// GetDataspaceElem
-XPtr<DataSpace> GetDataspaceElem(XPtr<DataSet> dataset, NumericMatrix coords);
-RcppExport SEXP h5_GetDataspaceElem(SEXP datasetSEXP, SEXP coordsSEXP) {
+// SelectElem
+XPtr<DataSpace> SelectElem(XPtr<DataSpace> dataspace, NumericMatrix coords);
+RcppExport SEXP h5_SelectElem(SEXP dataspaceSEXP, SEXP coordsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< XPtr<DataSet> >::type dataset(datasetSEXP);
+    Rcpp::traits::input_parameter< XPtr<DataSpace> >::type dataspace(dataspaceSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type coords(coordsSEXP);
-    __result = Rcpp::wrap(GetDataspaceElem(dataset, coords));
+    __result = Rcpp::wrap(SelectElem(dataspace, coords));
     return __result;
 END_RCPP
 }
-// GetDataspaceAll
-XPtr<DataSpace> GetDataspaceAll(XPtr<DataSet> dataset);
-RcppExport SEXP h5_GetDataspaceAll(SEXP datasetSEXP) {
+// SelectAll
+XPtr<DataSpace> SelectAll(XPtr<DataSpace> dataspace);
+RcppExport SEXP h5_SelectAll(SEXP dataspaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< XPtr<DataSet> >::type dataset(datasetSEXP);
-    __result = Rcpp::wrap(GetDataspaceAll(dataset));
+    Rcpp::traits::input_parameter< XPtr<DataSpace> >::type dataspace(dataspaceSEXP);
+    __result = Rcpp::wrap(SelectAll(dataspace));
     return __result;
 END_RCPP
 }
@@ -333,6 +345,17 @@ BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< XPtr<H5File> >::type file(fileSEXP);
     __result = Rcpp::wrap(FlushFile(file));
+    return __result;
+END_RCPP
+}
+// IsHDF5File
+bool IsHDF5File(string fname);
+RcppExport SEXP h5_IsHDF5File(SEXP fnameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< string >::type fname(fnameSEXP);
+    __result = Rcpp::wrap(IsHDF5File(fname));
     return __result;
 END_RCPP
 }
@@ -383,14 +406,39 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// GetFGInfo
-void GetFGInfo(XPtr<CommonFG> file, string path);
-RcppExport SEXP h5_GetFGInfo(SEXP fileSEXP, SEXP pathSEXP) {
+// GetGroupNames
+CharacterVector GetGroupNames(XPtr<CommonFG> file, string path, bool recursive);
+RcppExport SEXP h5_GetGroupNames(SEXP fileSEXP, SEXP pathSEXP, SEXP recursiveSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< XPtr<CommonFG> >::type file(fileSEXP);
     Rcpp::traits::input_parameter< string >::type path(pathSEXP);
-    GetFGInfo(file, path);
-    return R_NilValue;
+    Rcpp::traits::input_parameter< bool >::type recursive(recursiveSEXP);
+    __result = Rcpp::wrap(GetGroupNames(file, path, recursive));
+    return __result;
+END_RCPP
+}
+// GetDataSetNames
+CharacterVector GetDataSetNames(XPtr<CommonFG> file, string path);
+RcppExport SEXP h5_GetDataSetNames(SEXP fileSEXP, SEXP pathSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< XPtr<CommonFG> >::type file(fileSEXP);
+    Rcpp::traits::input_parameter< string >::type path(pathSEXP);
+    __result = Rcpp::wrap(GetDataSetNames(file, path));
+    return __result;
+END_RCPP
+}
+// GetAttributeNames
+CharacterVector GetAttributeNames(XPtr<CommonFG> file);
+RcppExport SEXP h5_GetAttributeNames(SEXP fileSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< XPtr<CommonFG> >::type file(fileSEXP);
+    __result = Rcpp::wrap(GetAttributeNames(file));
+    return __result;
 END_RCPP
 }

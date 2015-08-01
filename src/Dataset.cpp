@@ -1,4 +1,5 @@
 #include "Dataset.h"
+#include "Helpers.h"
 
 using namespace H5;
 using namespace Rcpp;
@@ -10,10 +11,18 @@ bool WriteDataset(XPtr<DataSet> dataset, XPtr<DataSpace> dataspace, SEXP mat,
   try {
     vector<hsize_t> count_t(count.begin(), count.end());
     DataSpace *memspace = new DataSpace(count.length(), &count_t[0]);
-    size_t stsize = dataset->getDataType().getSize();
 
-    const void *buf = ConvertBuffer(mat, datatype, stsize);
-    dataset->write(buf, GetDataType(datatype, stsize), *memspace, *dataspace);
+    size_t stsize = -1;
+    DataType dsettype = dataset->getDataType();
+    if (!H5Tis_variable_str(dsettype.getId())) {
+    	stsize = dsettype.getSize();
+    }
+    DTYPE type = GetTypechar(datatype);
+    const void *buf = ConvertBuffer(mat, type, stsize);
+    DataType dtype = GetDataType(type, stsize);
+    dataset->write(buf, dtype, *memspace, *dataspace);
+    //R_Free(buf);
+    dtype.close();
     return TRUE;
   } catch(Exception& error) {
     string msg = error.getDetailMsg() + " in " + error.getFuncName();
@@ -38,7 +47,10 @@ bool ExtendDataset(XPtr<DataSet> dset, NumericVector dimsnew) {
 char GetDataSetType(XPtr<DataSet> dataset) {
   try {
     DataType dtype = dataset->getDataType();
-    return GetTypechar(dtype);
+    DTYPE type = GetTypechar(dtype);
+    char tchar = GetTypechar(type);
+    dtype.close();
+    return tchar;
   } catch(Exception& error) {
     string msg = error.getDetailMsg() + " in " + error.getFuncName();
     throw Rcpp::exception(msg.c_str());
@@ -48,65 +60,21 @@ char GetDataSetType(XPtr<DataSet> dataset) {
 // [[Rcpp::export]]
 SEXP ReadDataset(XPtr<DataSet> dataset, XPtr<DataSpace> dataspace, NumericVector count) {
   try {
-    int ndim = count.length();
     vector<hsize_t> count_t(count.begin(), count.end());
-    DataSpace *memspace = new DataSpace(ndim, &count_t[0]);
+    Rcpp::XPtr<DataSpace> memspace(new DataSpace(count.length(), &count_t[0]));
     DataType dtype = dataset->getDataType();
-    char tchar = GetTypechar(dtype);
+    DTYPE tchar = GetTypechar(dtype);
 
-    NumericVector count_rev = clone<NumericVector>(count);
-    std::reverse(count_rev.begin(), count_rev.end());
-
-    SEXP data;
-    if (tchar == 'd') {
-      if (ndim == 1) {
-        data = PROTECT(Rf_allocVector(REALSXP, count[0]));
-      } else if (ndim == 2) {
-        data = PROTECT(Rf_allocMatrix(REALSXP, count[1], count[0]));
-      } else {//(ndim > 2)
-        data = PROTECT(Rf_allocArray(REALSXP, (IntegerVector)count_rev));
-      }
-      dataset->read(REAL(data), dtype, *memspace, *dataspace);
-    } else if (tchar == 'i') {
-      if (ndim == 1) {
-        data = PROTECT(Rf_allocVector(INTSXP, count[0]));
-      } else if (ndim == 2) {
-        data = PROTECT(Rf_allocMatrix(INTSXP, count[1], count[0]));
-      } else {//(ndim > 2)
-        data = PROTECT(Rf_allocArray(INTSXP, (IntegerVector)count_rev));
-      }
-      dataset->read(INTEGER(data), dtype, *memspace, *dataspace);
-    } else if (tchar == 'c') {
-       size_t stsize = dtype.getSize();
-        hsize_t n = dataspace->getSelectNpoints();
-        if (ndim == 1) {
-         data = PROTECT(Rf_allocVector(STRSXP, count[0]));
-        } else if (ndim == 2) {
-         data = PROTECT(Rf_allocMatrix(STRSXP, count[1], count[0]));
-        } else {//(ndim > 2)
-         data = PROTECT(Rf_allocArray(STRSXP, (IntegerVector)count_rev));
-        }
-        char *strbuf = (char *)R_alloc(n, stsize);
-        dataset->read(strbuf, dtype, *memspace, *dataspace);
-        for(unsigned int i = 0; i < n; i++) {
-          SET_STRING_ELT(data, i, Rf_mkChar(strbuf));
-          strbuf += stsize;
-        }
-        //delete strbuf; TODO: should R_free be called on strbuf?
-    } else {
-      throw Rcpp::exception("Datatype unknown.");
-    }
-
-    UNPROTECT(1);
-    memspace->close();
-    delete memspace;
-    //dataspace.close();
-    return data;
+    SEXP data = AllocateRData(tchar, count);
+	data = ReadRData(tchar, data, dataset, memspace, dataspace);
+	memspace->close();
+	return data;
   } catch(Exception& error) {
     string msg = error.getDetailMsg() + " in " + error.getFuncName();
     throw Rcpp::exception(msg.c_str());
   }
 }
+
 
 // [[Rcpp::export]]
 bool CloseDataset(XPtr<DataSet> dataset) {
@@ -129,30 +97,38 @@ XPtr<DataSet> CreateDataset(XPtr<CommonFG> file, string datasetname, char dataty
 	vector<hsize_t> maxdims(maxshape.begin(), maxshape.end());
 
 	int rank = dimensions.length();
-	for(int i = 0; i < rank; i++) {
-      if (R_IsNA(maxshape[i])) {
-         maxdims[i] = H5S_UNLIMITED;
-      }
-    }
-
-    // Create the data space for the dataset.
-    DataSpace dataspace (dimensions.length(), &dims[0], &maxdims[0]);
-    // Set chunksize
-    vector<hsize_t> chunk_dims(chunksize.begin(), chunksize.end());
 
     DSetCreatPropList prop;
-    prop.setDeflate(compressionlevel);
-    // TODO: set chunk dims appropriately
-    prop.setChunk(rank, &chunk_dims[0]);
-    DataSet dataset = file->createDataSet((H5std_string)datasetname,
-        GetDataType(datatype, size), dataspace, prop);
+    DataSpace dataspace(dimensions.length(), &dims[0]);
+
+    if (!R_IsNA(chunksize[0])) {
+    	for(int i = 0; i < rank; i++) {
+		  if (R_IsNA(maxshape[i])) {
+			 maxdims[i] = H5S_UNLIMITED;
+		  }
+		}
+		// Create the data space for the dataset.
+		dataspace.setExtentSimple(dimensions.length(), &dims[0], &maxdims[0]);
+    	vector<hsize_t> chunk_dims(chunksize.begin(), chunksize.end());
+    	prop.setChunk(rank, &chunk_dims[0]);
+    	prop.setDeflate(compressionlevel);
+    }
+
+    if(size > 0) { // Adjust for null-termination character
+	  size += 1;
+	}
+    DataType dsettype = GetDataType(GetTypechar(datatype), size);
+
+    DataSet dataset = file->createDataSet(datasetname.c_str(),
+    		dsettype, dataspace, prop);
 
     if (dataset.getId() == -1) {
       dataset.close();
       prop.close();
       dataspace.close();
-      throw Rcpp::exception("Creation of DataSet failed. Maybe dataset with same name is already existing at location.");
+      throw Rcpp::exception("Creation of DataSet failed.");
     }
+    dsettype.close();
     prop.close();
     dataspace.close();
     return XPtr<DataSet>(new DataSet(dataset));
@@ -165,7 +141,7 @@ XPtr<DataSet> CreateDataset(XPtr<CommonFG> file, string datasetname, char dataty
 // [[Rcpp::export]]
 XPtr<DataSet> OpenDataset(XPtr<CommonFG> file, string datasetname) {
   try {
-    DataSet *dataset = new DataSet(file->openDataSet((H5std_string)datasetname));
+    DataSet *dataset = new DataSet(file->openDataSet(datasetname.c_str()));
     return XPtr<DataSet>(dataset);
   } catch(Exception& error) {
     string msg = error.getDetailMsg() + " in " + error.getFuncName();
@@ -202,7 +178,7 @@ NumericVector GetDataSetChunksize(XPtr<DataSet> dataset) {
 	  cparms.getChunk( ndim, &chunk_dims[0]);
 	  return NumericVector(chunk_dims.begin(), chunk_dims.end());
   }
-  return NA_REAL;
+  return NumericVector::create(NA_REAL);
 }
 
 // [[Rcpp::export]]

@@ -81,16 +81,20 @@ GetDataSetCompression <- function(dataset) {
     .Call('h5_GetDataSetCompression', PACKAGE = 'h5', dataset)
 }
 
-GetDataspace <- function(dataset, offset, count) {
-    .Call('h5_GetDataspace', PACKAGE = 'h5', dataset, offset, count)
+GetDataspace <- function(dataset) {
+    .Call('h5_GetDataspace', PACKAGE = 'h5', dataset)
 }
 
-GetDataspaceElem <- function(dataset, coords) {
-    .Call('h5_GetDataspaceElem', PACKAGE = 'h5', dataset, coords)
+SelectHyperslab <- function(dataspace, offset, count, seloper = "SET") {
+    .Call('h5_SelectHyperslab', PACKAGE = 'h5', dataspace, offset, count, seloper)
 }
 
-GetDataspaceAll <- function(dataset) {
-    .Call('h5_GetDataspaceAll', PACKAGE = 'h5', dataset)
+SelectElem <- function(dataspace, coords) {
+    .Call('h5_SelectElem', PACKAGE = 'h5', dataspace, coords)
+}
+
+SelectAll <- function(dataspace) {
+    .Call('h5_SelectAll', PACKAGE = 'h5', dataspace)
 }
 
 CloseDataspace <- function(dataspace) {
@@ -109,6 +113,10 @@ FlushFile <- function(file) {
     .Call('h5_FlushFile', PACKAGE = 'h5', file)
 }
 
+IsHDF5File <- function(fname) {
+    .Call('h5_IsHDF5File', PACKAGE = 'h5', fname)
+}
+
 CreateGroup <- function(file, groupname) {
     .Call('h5_CreateGroup', PACKAGE = 'h5', file, groupname)
 }
@@ -125,7 +133,15 @@ ExistsGroup <- function(file, groupname) {
     .Call('h5_ExistsGroup', PACKAGE = 'h5', file, groupname)
 }
 
-GetFGInfo <- function(file, path) {
-    invisible(.Call('h5_GetFGInfo', PACKAGE = 'h5', file, path))
+GetGroupNames <- function(file, path, recursive) {
+    .Call('h5_GetGroupNames', PACKAGE = 'h5', file, path, recursive)
+}
+
+GetDataSetNames <- function(file, path) {
+    .Call('h5_GetDataSetNames', PACKAGE = 'h5', file, path)
+}
+
+GetAttributeNames <- function(file) {
+    .Call('h5_GetAttributeNames', PACKAGE = 'h5', file)
 }
 

@@ -13,6 +13,8 @@ testarray_n <- array(testvec_n, dim = c(3, 3, 10))
 testvec_s <- paste0(LETTERS[1:90], LETTERS[seq(90, 1)])
 testmat_s <- matrix(testvec_s, ncol = 9)
 testarray_s <- array(testvec_s, dim = c(3, 3, 10))
+maxchar <- max(nchar(testvec_s))
+
 
 testvec_l <- rep(c(TRUE, FALSE), 45)
 testmat_l <- matrix(testvec_l, ncol = 9)
@@ -21,13 +23,15 @@ testarray_l <- array(testvec_l, dim = c(3, 3, 10))
 testall <- list(
     testvec_i, testmat_i, testarray_i,
     testvec_n, testmat_n, testarray_n, 
+    testvec_l, testmat_l, testarray_l,
+    testvec_s, testmat_s, testarray_s,
     testvec_s, testmat_s, testarray_s
-    #testvec_l, testmat_l, testarray_l
     )
 
+    
 test_that("Attribute-Errors", {   
   if(file.exists(fname)) file.remove(fname)
-  file <- H5File(fname, "a")
+  file <- h5file(fname, "a")
 
   f <- function() h5attr(file, "test")
   expect_that(f(), throws_error("Opening Attribute failed"))    
@@ -38,8 +42,8 @@ test_that("Attribute-Errors", {
   expect_that(f(), throws_error("Opening Attribute failed"))    
   h5attr(group, "test") <- c("A", "BE", "BU")
   
-  group[, "testset"] <- 1:10
-  dset <- group[, "testset"] 
+  group["testset"] <- 1:10
+  dset <- group["testset"] 
   f <- function() h5attr(dset, "test")
   expect_that(f(), throws_error("Opening Attribute failed"))    
   h5attr(dset, "test") <- c("A", "BE", "BU")
@@ -47,44 +51,53 @@ test_that("Attribute-Errors", {
   h5close(group)
   h5close(file)
   
-  file <- H5File(fname, "r")
+  file <- h5file(fname, "r")
   expect_that(h5attr(file, "test"), is_identical_to(c("A", "BE", "BU")))
   group <- file["testgroup"]
   expect_that(h5attr(group, "test"), is_identical_to(c("A", "BE", "BU")))
-  dset <- group[, "testset"] 
+  dset <- group["testset"] 
   expect_that(h5attr(dset, "test"), is_identical_to(c("A", "BE", "BU")))
   h5close(dset)
   h5close(group)
   h5close(file)
-  
+  expect_that(file.remove(fname), is_true())
 })      
       
 test_that("Attribute-H5Type-File", {      
   if(file.exists(fname)) file.remove(fname)
-  file <- H5File(fname, "a")
+  file <- h5file(fname, "a")
   
   for(i in 1:length(testall)) {
     aname <- sprintf("attribute_%02d", i)
-    h5attr(file, aname) <- testall[[i]]
+    if(i < length(testall))
+      h5attr(file, aname) <- testall[[i]]
+    else
+      h5attr(file, aname, size = maxchar) <- testall[[i]]
   }
   
   group <- file["testgroup"]
   for(i in 1:length(testall)) {
     aname <- sprintf("attribute_%02d", i)
-    h5attr(group, aname) <- testall[[i]]
+    if(i < length(testall))
+      h5attr(group, aname) <- testall[[i]]
+    else
+      h5attr(group, aname, size = maxchar) <- testall[[i]]
   }
  
-  file["testgroup", "dset"] <- 1:10
-  dset <- file["testgroup", "dset"]
+  file["testgroup/dset"] <- 1:10
+  dset <- file["testgroup/dset"]
   for(i in 1:length(testall)) {
     aname <- sprintf("attribute_%02d", i)
-    h5attr(dset, aname) <- testall[[i]]
+    if(i < length(testall))
+      h5attr(dset, aname) <- testall[[i]]
+    else
+      h5attr(dset, aname, size = maxchar) <- testall[[i]]
   }
   h5close(group)
   h5close(dset)
   h5close(file) 
   
-  file <- H5File(fname, "r")
+  file <- h5file(fname, "r")
   for(i in 1:length(testall)) {
     aname <- sprintf("attribute_%02d", i)
     expect_that(h5attr(file, aname), is_identical_to(testall[[i]]))
@@ -96,7 +109,7 @@ test_that("Attribute-H5Type-File", {
     expect_that(h5attr(group, aname), is_identical_to(testall[[i]]))
   }
   
-  dset <- group[, "dset"]
+  dset <- group["dset"]
   for(i in 1:length(testall)) {
     aname <- sprintf("attribute_%02d", i)
     expect_that(h5attr(dset, aname), is_identical_to(testall[[i]]))
@@ -104,5 +117,18 @@ test_that("Attribute-H5Type-File", {
   h5close(group)
   h5close(dset)
   h5close(file) 
+  expect_that(file.remove(fname), is_true())
 })    
-   
+
+test_that("Bug_AttributeGroupSubset", {        
+  fname <- "test.h5"
+  if(file.exists(fname)) file.remove(fname)
+  file <- h5file(name = "test.h5")
+  file["testdataset"] <- 1:10
+  h5attr(file, "testattrib") <- LETTERS[1:10]
+  file["testgroup/testdataset2"] <- 1:10
+
+  h5attr(file["testdataset"], "test") <- 1:10
+  h5close(file) 
+  expect_that(file.remove(fname), is_true())
+})

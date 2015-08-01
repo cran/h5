@@ -14,13 +14,13 @@
 #' @aliases H5Location-Attribute H5Location H5Location-class
 #' @examples
 #' # Write Attributes for H5File, H5Group and DataSet
-#' file <- H5File("test.h5")
+#' file <- h5file("test.h5")
 #' h5attr(file, "fileattrib") <- 1:10
 #' group <- file["testgroup"]
 #' h5attr(group, "groupattrib") <- matrix(1:9, nrow = 3)
 #' h5attr(group, "groupattrib")
-#' group[, "testdataset"] <- 1:10
-#' dset <- group[, "testdataset"]
+#' group["testdataset"] <- 1:10
+#' dset <- group["testdataset"]
 #' h5attr(dset, "dsetattrib") <- LETTERS[1:10]
 #' h5close(dset)
 #' h5close(group)
@@ -30,16 +30,19 @@
 setClass( "H5Location", representation( pointer = "externalptr" ) )
 
 #' @rdname H5Location-Attribute
+#' @param size numeric; Character length for fixed-length string data types.
+#' Default value of -1 creates variable-length strings.
 #' @export
-setGeneric("createAttribute", function(.Object, attributename, data)
+setGeneric("createAttribute", function(.Object, attributename, data, size = -1)
 			standardGeneric("createAttribute")
 )
 
 #' @rdname H5Location-Attribute
+#' @importFrom methods new
 #' @export
 setMethod("createAttribute", signature(.Object="H5Location", 
-        attributename = "character", data = "ANY"), 
-  function(.Object, attributename, data) {
+        attributename = "character", data = "ANY", size = "ANY"), 
+  function(.Object, attributename, data, size) {
     dspace <- GetDataSpace(data)
     FUN <- NULL
     if (inherits(.Object, "DataSet")) {
@@ -50,12 +53,14 @@ setMethod("createAttribute", signature(.Object="H5Location",
       stop("Object type unknown.")
     }
     attrptr <- FUN(.Object@pointer, attributename, dspace$typechar, dspace$dim, 
-        dspace$size)
+        size)
+    
     attrib <- new("Attribute", attrptr, attributename, dspace$typechar, dspace$dim)
     writeAttribute(attrib, data)
     CloseAttribute(attrib@pointer)
     invisible(TRUE)
   })
+
 
 
 #' @rdname H5Location-Attribute
@@ -65,6 +70,7 @@ setGeneric("openAttribute", function(.Object, attributename)
 )
 
 #' @rdname H5Location-Attribute
+#' @importFrom methods new
 #' @export
 setMethod("openAttribute", signature(.Object="H5Location", attributename = "character"), 
   function(.Object, attributename) {
@@ -100,8 +106,9 @@ setMethod("h5attr", signature(.Object="H5Location", attributename = "character")
 #' @rdname H5Location-Attribute
 #' @param value object; Object to be stored in HDF5 Attribute, can be either of 
 #' type vector, matrix or array.
+#' @param ... Additional parameters passed to \code{\link{createAttribute}}. 
 #' @export                                                                      
-setGeneric("h5attr<-", function(.Object, attributename, value)
+setGeneric("h5attr<-", function(.Object, attributename, ..., value)
       standardGeneric("h5attr<-")
 )
 
@@ -109,7 +116,23 @@ setGeneric("h5attr<-", function(.Object, attributename, value)
 #' @export
 setMethod("h5attr<-", signature(.Object="H5Location", attributename = "character", 
         value = "ANY"),
-  function(.Object, attributename, value) {
-    createAttribute(.Object, attributename, value)
+  function(.Object, attributename, ..., value) {
+    createAttribute(.Object, attributename, value, ...)
     .Object
   })
+
+#' @rdname H5Location-Attribute
+#' @export
+setGeneric("list.attributes", function(.Object)
+      standardGeneric("list.attributes")
+)
+
+#' @rdname H5Location-Attribute
+#' @export
+setMethod( "list.attributes", c("H5Location"), 
+    function(.Object) {
+      res <- GetAttributeNames(.Object@pointer)
+      res
+    })    
+
+
