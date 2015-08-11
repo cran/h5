@@ -1,4 +1,4 @@
-b6a2254ffe863597e9b62f8c30f5cdb2 *DESCRIPTION
+af3afa8f52bf14e730ecc6d3c0d7912d *DESCRIPTION
 7c23cf64e93faeab1aa9aeab438e539b *INSTALL
 50302128b0220cb1ba40f1cd7dcb7e21 *LICENSE
 9f38f0f6511f78587bd8c0511e41652a *NAMESPACE
@@ -20,7 +20,7 @@ fdb49c26909fa56b35c6f363ecb32e19 *R/h5-package.R
 1388b2c94441eb144bc1058f0bdaf488 *configure.ac
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 2be28daacf78ab5f10c702856a13c2b2 *inst/COPYRIGHTS
-29fceb715434265a2413db464e0fc614 *inst/NEWS.Rd
+8aba4b2b7257fc124fccf10b20f37896 *inst/NEWS.Rd
 c57e313bdf814c0526dc65a02228a7c0 *inst/benchmark/benchmark-BigSet.R
 43fd25ed09b99b2b4cd851db125478ba *inst/include/h5.h
 55d42f0714e4e6252112d93a0319b16a *man/Attribute.Rd
@@ -37,7 +37,7 @@ a37f7c12694f018f6be37da1ad10b37a *man/H5Location-Attribute.Rd
 2cb6f2af3235036ecb7c8deb9e93c80e *man/h5-package.Rd
 d5840baa0cbc3b628e57d9e180270466 *src/Attribute.cpp
 36e610a9483b4a73daa38a0e75533076 *src/Attribute.h
-17d56a0b2a79c5d6889335c1dc9bbe09 *src/Dataset.cpp
+e684fb5141ca07f1e5b1a4f8c0fb8b47 *src/Dataset.cpp
 4a281d3ef73ac8effd4e009309984a2a *src/Dataset.h
 238fc5586872130b388fa511eb46ef7e *src/Dataspace.cpp
 873dbf952de4a29f8f97d7d4e8a8a949 *src/Dataspace.h
@@ -45,7 +45,7 @@ dff6059f0c31ded273d146fc5e81059a *src/File.cpp
 019bbaaff90fac761aaa6559a540271d *src/File.h
 4cb2a573b2e903336772db024ffa5327 *src/Group.cpp
 d7e0c5eaebe83ff55640dbaccf97ed26 *src/Group.h
-56d50d94478d824084f675a3cac805c6 *src/Helpers.cpp
+ae49be0cefe51f487bd582641ac41a07 *src/Helpers.cpp
 4592a2e5c7ecf4c368714384d938a65f *src/Helpers.h
 60b61ab28ace9f59732aa9f228c747c8 *src/Makevars.in
 d81859090b24046566133f8cf3198c33 *src/Makevars.win
