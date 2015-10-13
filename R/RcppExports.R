@@ -37,6 +37,14 @@ GetAttributeDimensions <- function(attribute) {
     .Call('h5_GetAttributeDimensions', PACKAGE = 'h5', attribute)
 }
 
+GetAttributeNames_CommonFG <- function(file) {
+    .Call('h5_GetAttributeNames_CommonFG', PACKAGE = 'h5', file)
+}
+
+GetAttributeNames_DataSet <- function(file) {
+    .Call('h5_GetAttributeNames_DataSet', PACKAGE = 'h5', file)
+}
+
 WriteDataset <- function(dataset, dataspace, mat, datatype, count) {
     .Call('h5_WriteDataset', PACKAGE = 'h5', dataset, dataspace, mat, datatype, count)
 }
@@ -141,7 +149,7 @@ GetDataSetNames <- function(file, path) {
     .Call('h5_GetDataSetNames', PACKAGE = 'h5', file, path)
 }
 
-GetAttributeNames <- function(file) {
-    .Call('h5_GetAttributeNames', PACKAGE = 'h5', file)
+Unlink <- function(file, path) {
+    .Call('h5_Unlink', PACKAGE = 'h5', file, path)
 }
 

@@ -11,10 +11,11 @@ DataType GetDataType(const DTYPE datatype, int size = -1) {
     case T_DOUBLE: return PredType::NATIVE_DOUBLE;
     case T_INTEGER: return PredType::NATIVE_INT32;
     case T_LOGICAL: {
-    	bool val;
-    	EnumType boolenumtype = EnumType(sizeof(bool));
+    	int val;
+    	EnumType boolenumtype = EnumType(sizeof(char));
     	boolenumtype.insert("FALSE", CPTR(val, FALSE));
     	boolenumtype.insert("TRUE", CPTR(val, TRUE));
+    	boolenumtype.insert("NA", CPTR(val, -1));
     	return boolenumtype;
     }
     case T_CHARACTER: {
@@ -54,12 +55,16 @@ struct cmpDataType {
 };
 
 DTYPE GetTypechar(const DataType &dtype) {
-
 	if ( (dtype == PredType::NATIVE_FLOAT) ||
 		 (dtype == PredType::NATIVE_DOUBLE) ||
 		 (dtype == PredType::NATIVE_INT64) ||
 		 (dtype == PredType::NATIVE_UINT32) ||
-		 (dtype == PredType::NATIVE_UINT64)) {
+		 (dtype == PredType::NATIVE_UINT64) ||
+		 (dtype == PredType::IEEE_F32BE) ||
+		 (dtype == PredType::IEEE_F32LE) ||
+		 (dtype == PredType::IEEE_F64BE) ||
+		 (dtype == PredType::IEEE_F64LE)
+	) {
 	  return T_DOUBLE;
 	}
 
@@ -154,10 +159,14 @@ void *ConvertBuffer(const SEXP &mat, DTYPE datatype, int stsize) {
     	   return INTEGER(mat);
        }
        case T_LOGICAL: {
-           bool *boolbuf = (bool *)R_alloc(LENGTH(mat), sizeof(bool));
+    	   char *boolbuf = (char *)R_alloc(LENGTH(mat), sizeof(char));
            int z=0;
            for (int i = 0; i < LENGTH(mat); i++) {
-        	   boolbuf[z++] = LOGICAL(mat)[i];
+        	   if(LOGICAL(mat)[i] == NA_LOGICAL) {
+        		   boolbuf[z++] = -1;
+        	   } else {
+        		   boolbuf[z++] = LOGICAL(mat)[i];
+        	   }
            }
            return boolbuf;
        }
@@ -228,8 +237,6 @@ SEXP AllocateRData(DTYPE tchar, NumericVector count) {
 	NumericVector count_rev = clone<NumericVector>(count);
 	std::reverse(count_rev.begin(), count_rev.end());
 
-
-
 	switch(tchar) {
 		case T_DOUBLE:
 			if (ndim == 1) {
@@ -293,10 +300,14 @@ SEXP ReadRData(DTYPE tchar, SEXP data,
 				break;
 			case T_LOGICAL: {
 				hsize_t n = dataspace->getSelectNpoints();
-				bool *boolbuf = (bool *)R_alloc(n, sizeof(bool));
+				char *boolbuf = (char *)R_alloc(n, sizeof(char));
 				dataset->read(boolbuf, GetDataType(T_LOGICAL), *memspace, *dataspace);
 				for(unsigned int i = 0; i < n; i++) {
-				  LOGICAL(data)[i] = boolbuf[i];
+					if(boolbuf[i] == -1) {
+						LOGICAL(data)[i] = NA_LOGICAL;
+					} else {
+						LOGICAL(data)[i] = boolbuf[i];
+					}
 				}
 				break;
 			}
@@ -309,7 +320,12 @@ SEXP ReadRData(DTYPE tchar, SEXP data,
 					char *strbuf = (char *)R_alloc(n, stsize);
 					dataset->read(strbuf, dtype, *memspace, *dataspace);
 					for(unsigned int i = 0; i < n; i++) {
-					  SET_STRING_ELT(data, i, Rf_mkChar(strbuf));
+					  Rcpp::String readstr(strbuf);
+					  if(readstr == "NA") {
+						  SET_STRING_ELT(data, i, NA_STRING);
+					  } else {
+						  SET_STRING_ELT(data, i, readstr.get_sexp());
+					  }
 					  strbuf += stsize;
 					}
 				} else { // Assume variable-length string
@@ -318,7 +334,11 @@ SEXP ReadRData(DTYPE tchar, SEXP data,
 					dataset->read(strbuf, dtype, *memspace, *dataspace);
 					for(unsigned int i = 0; i < n; i++) {
 					  Rcpp::String readstr(strbuf[i]);
-					  SET_STRING_ELT(data, i, readstr.get_sexp());
+					  if(readstr == "NA") {
+						  SET_STRING_ELT(data, i, NA_STRING);
+					  } else {
+						  SET_STRING_ELT(data, i, readstr.get_sexp());
+					  }
 					}
 				}
 				dtype.close();
@@ -372,89 +392,87 @@ SEXP ReadRData(DTYPE tchar, SEXP data,
 
 SEXP ReadRDataAttribute(DTYPE tchar, SEXP data,
 			XPtr<Attribute> attribute) {
-	try {
-		switch(tchar) {
-			case T_DOUBLE:
-				attribute->read(PredType::NATIVE_DOUBLE, REAL(data));
-				break;
-			case T_INTEGER:
-				attribute->read(PredType::NATIVE_INT32, INTEGER(data));
-				break;
-			case T_LOGICAL: {
-				hsize_t n = attribute->getSpace().getSelectNpoints();
-				bool *boolbuf = (bool *)R_alloc(n, sizeof(bool));
-				attribute->read(GetDataType(T_LOGICAL), boolbuf);
-				for(unsigned int i = 0; i < n; i++) {
-				  LOGICAL(data)[i] = boolbuf[i];
-				}
-				break;
+try {
+	switch(tchar) {
+		case T_DOUBLE:
+			attribute->read(PredType::NATIVE_DOUBLE, REAL(data));
+			break;
+		case T_INTEGER:
+			attribute->read(PredType::NATIVE_INT32, INTEGER(data));
+			break;
+		case T_LOGICAL: {
+			hsize_t n = attribute->getSpace().getSelectNpoints();
+			bool *boolbuf = (bool *)R_alloc(n, sizeof(bool));
+			attribute->read(GetDataType(T_LOGICAL), boolbuf);
+			for(unsigned int i = 0; i < n; i++) {
+			  LOGICAL(data)[i] = boolbuf[i];
 			}
-			case T_CHARACTER: {
-				DataType dtype = attribute->getDataType();
-				size_t stsize = dtype.getSize();
-				hsize_t n = attribute->getSpace().getSelectNpoints();
-
-				if(!H5Tis_variable_str(dtype.getId())) {
-					char *strbuf = (char *)R_alloc(n, stsize);
-					attribute->read(dtype, strbuf);
-					for(unsigned int i = 0; i < n; i++) {
-					  SET_STRING_ELT(data, i, Rf_mkChar(strbuf));
-					  strbuf += stsize;
-					}
-				} else { // Assume variable-length string
-					char ** strbuf = new char *[n];
-					attribute->read(dtype, strbuf);
-					for(unsigned int i = 0; i < n; i++) {
-					  Rcpp::String readstr(strbuf[i]);
-					  SET_STRING_ELT(data, i, readstr.get_sexp());
-					}
-					delete [] strbuf;
-				}
-				break;
-			}
-			case T_VLEN_DOUBLE: {
-				 hsize_t n = attribute->getSpace().getSelectNpoints();
-				 DataType dtypein = GetDataType(tchar, -1);
-				 hvl_t * dbuf = (hvl_t *)R_alloc(n, dtypein.getSize());
-				 attribute->read(dtypein, dbuf);
-
-				 vector<vector<double> > datvec;
-				 double *ptr = (double *)NULL;
-				 for (unsigned int i=0; i < n; i++) {
-					 ptr = (double *)dbuf[i].p;
-					 vector<double> rowvec(ptr, ptr + dbuf[i].len);
-					 datvec.push_back(rowvec);
-				 }
-
-				 data = wrap(datvec);
-				 delete ptr;
-				 return data;
-			}
-			case T_VLEN_INTEGER: {
-				 hsize_t n = attribute->getSpace().getSelectNpoints();
-				 DataType dtypein = GetDataType(tchar, -1);
-				 hvl_t * dbuf = (hvl_t *)R_alloc(n, dtypein.getSize());
-				 attribute->read(dtypein, dbuf);
-
-				 vector<vector<int> > datvec;
-				 int *ptr = (int *)NULL;
-				 for (unsigned int i=0; i < n; i++) {
-					 ptr = (int *)dbuf[i].p;
-					 vector<int> rowvec(ptr, ptr + dbuf[i].len);
-					 datvec.push_back(rowvec);
-				 }
-
-				 data = wrap(datvec);
-				 delete ptr;
-				 return data;
-			}
-			default:
-				throw Rcpp::exception("Datatype unknown.");
+			break;
 		}
+		case T_CHARACTER: {
+			DataType dtype = attribute->getDataType();
+			size_t stsize = dtype.getSize();
+			hsize_t n = attribute->getSpace().getSelectNpoints();
 
-		UNPROTECT(1);
-		//dataspace.close();
-		return data;
+			if(!H5Tis_variable_str(dtype.getId())) {
+				char *strbuf = (char *)R_alloc(n, stsize);
+				attribute->read(dtype, strbuf);
+				for(unsigned int i = 0; i < n; i++) {
+				  SET_STRING_ELT(data, i, Rf_mkChar(strbuf));
+				  strbuf += stsize;
+				}
+			} else { // Assume variable-length string
+				char ** strbuf = new char *[n];
+				attribute->read(dtype, strbuf);
+				for(unsigned int i = 0; i < n; i++) {
+				  Rcpp::String readstr(strbuf[i]);
+				  SET_STRING_ELT(data, i, readstr.get_sexp());
+				}
+				delete [] strbuf;
+			}
+			break;
+		}
+		case T_VLEN_DOUBLE: {
+			 hsize_t n = attribute->getSpace().getSelectNpoints();
+			 DataType dtypein = GetDataType(tchar, -1);
+			 hvl_t * dbuf = (hvl_t *)R_alloc(n, dtypein.getSize());
+			 attribute->read(dtypein, dbuf);
+
+			 vector<vector<double> > datvec;
+			 double *ptr = (double *)NULL;
+			 for (unsigned int i=0; i < n; i++) {
+				 ptr = (double *)dbuf[i].p;
+				 vector<double> rowvec(ptr, ptr + dbuf[i].len);
+				 datvec.push_back(rowvec);
+			 }
+
+			 data = wrap(datvec);
+			 return data;
+		}
+		case T_VLEN_INTEGER: {
+			 hsize_t n = attribute->getSpace().getSelectNpoints();
+			 DataType dtypein = GetDataType(tchar, -1);
+			 hvl_t * dbuf = (hvl_t *)R_alloc(n, dtypein.getSize());
+			 attribute->read(dtypein, dbuf);
+
+			 vector<vector<int> > datvec;
+			 int *ptr = (int *)NULL;
+			 for (unsigned int i=0; i < n; i++) {
+				 ptr = (int *)dbuf[i].p;
+				 vector<int> rowvec(ptr, ptr + dbuf[i].len);
+				 datvec.push_back(rowvec);
+			 }
+
+			 data = wrap(datvec);
+			 return data;
+		}
+		default:
+			throw Rcpp::exception("Datatype unknown.");
+	}
+
+	UNPROTECT(1);
+	//dataspace.close();
+	return data;
   } catch(Exception& error) {
 	string msg = error.getDetailMsg() + " in " + error.getFuncName();
 	throw Rcpp::exception(msg.c_str());

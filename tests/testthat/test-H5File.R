@@ -65,6 +65,11 @@ test_that("H5File-FileMode-param-w-",{
 
 test_that("H5File-FileMode-param-w",{
   expect_that(file.exists(fname), is_true())
+  # Seems HDF5 since 1.8.15 does not detect that file does exist but is already 
+  # closed, see also https://www.hdfgroup.org/HDF5/doc/RM/RM_H5F.html
+  # We therefore need to delete file
+  expect_that(file.remove(fname), is_true())
+      
   file <- h5file(fname, "w")
   expect_that(file@mode, is_identical_to("w"))
   expect_that(basename(file@location), is_identical_to(fname))
@@ -74,6 +79,9 @@ test_that("H5File-FileMode-param-w",{
   h5close(file)
 	
   expect_that(file.exists(fname), is_true())
+  # See above
+  expect_that(file.remove(fname), is_true())
+  
   file <- h5file(fname, "w")
   expect_that(file@mode, is_identical_to("w"))
   expect_that(basename(file@location), is_identical_to(fname))
@@ -143,5 +151,13 @@ test_that("H5File-is-h5file",{
   expect_that(is.h5file(fnametxt), is_false())
   expect_that(file.remove(fname), is_true())
   expect_that(file.remove(fnametxt), is_true())
+})
+
+test_that("H5File-flush",{
+  if(file.exists(fname)) file.remove(fname)
+  file <- h5file(fname)
+  file["testgroup/testset"] <- 1:100
+  expect_that(h5flush(file), is_true())
+  h5close(file)
 })
 
