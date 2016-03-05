@@ -12,15 +12,13 @@
 #' @param .Object DataSet; S4 object of class \code{DataSet};
 #' @param data object; Object to be stored in HDF5 file, can be either of type 
 #' vector, matrix or array.
-#' @param offset numeric; Offset to be selected from Hyperslab.
-#' @param count numeric; Count to be selected from Hyperslab.
 #' @param dspace DataSpace; Data space object used for data selection.
 #' @param ... additional arguments passed to \code{\link{c}}.
 #' @aliases DataSet-class
 #' @rdname DataSet
 #' @name DataSet
 #' @include H5Location-Attribute.R
-#' @references \url{http://www.hdfgroup.org/HDF5/doc/UG/UG_frame10Datasets.html}
+#' @references \url{https://www.hdfgroup.org/HDF5/doc/H5.intro.html#Intro-ODatasets}
 #' @export
 setClass( "DataSet", representation( name = "character",
                                      datatype = "character",
@@ -62,9 +60,7 @@ setMethod("writeDataSet", signature(.Object="DataSet", data = "ANY", dspace = "A
 #' @rdname DataSet
 #' @export
 setGeneric("readDataSet", function(.Object, 
-        dspace = selectDataSpace(.Object, 
-          offset = rep(NA_integer_, length(.Object@dim)), 
-          count = rep(NA_integer_, length(.Object@dim))))
+        dspace = selectDataSpace(.Object))
 			standardGeneric("readDataSet")
 )
 
