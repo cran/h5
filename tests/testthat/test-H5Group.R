@@ -98,36 +98,39 @@ test_that("CommonFG-list-groups",{
   
   f <- function() list.groups(file, path = "a/be/bu")
   expect_that(f(), throws_error("Specified path does not exist"))
-  
   expect_that(list.groups(file), is_identical_to(character(0)))
   
-  file["testgroup/testset"] <- 1:3
+  g1 <- file["testgroup"]
+  g1["testset"] <- 1:3
   expect_that(list.groups(file), is_identical_to(c("/testgroup")))
   expect_that(list.groups(file, recursive = FALSE), is_identical_to(c("/testgroup")))
   expect_that(list.groups(file, full.names = FALSE), is_identical_to(c("testgroup")))
   
   
-  file["testgroup/testgroup1/testset1"] <- 1:3
-  file["testgroup/testgroup2/testset2"] <- 1:3
-  file["testgroup3/testgroup3/testset3"] <- 1:3
+  g1["testgroup1/testset1"] <- 1:3
+  g1["testgroup2/testset2"] <- 1:3
+  g1["testgroup3/testset3"] <- 1:3
+  h5close(g1)
+
   group <- file["testgroupN"]
   h5close(group)
   
-  ex <- c("/testgroup", "/testgroup3", "/testgroupN", "/testgroup/testgroup1", 
-      "/testgroup/testgroup2", "/testgroup3/testgroup3")
+  ex <- c("/testgroup", "/testgroup/testgroup1", "/testgroup/testgroup2",
+ 	"/testgroup/testgroup3", "/testgroupN")
   expect_that(list.groups(file), is_identical_to(ex))
   
-  ex <- c("testgroup", "testgroup1", "testgroup2", "testgroup3", "testgroup3", "testgroupN")
+  ex <- c("testgroup", "testgroup1", "testgroup2", "testgroup3", "testgroupN")
   expect_that(list.groups(file, full.names = FALSE), is_identical_to(ex))
   
-  ex <- c("/testgroup", "/testgroup3", "/testgroupN")
+  ex <- c("/testgroup", "/testgroupN")
   expect_that(list.groups(file, recursive = FALSE), is_identical_to(ex))
 
-  ex <- c("/testgroup/testgroup1", "/testgroup/testgroup2")
+  ex <- c("/testgroup/testgroup1", "/testgroup/testgroup2", "/testgroup/testgroup3")
   testgroup <- file["testgroup"]
   #expect_that(list.groups(file["testgroup"], full.names = TRUE), is_identical_to(ex))
   expect_that(list.groups(testgroup, full.names = TRUE), is_identical_to(ex))    
   h5close(testgroup)
+
   h5close(file)
   expect_that(file.remove(fname), is_true())
 })  

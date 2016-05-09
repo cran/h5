@@ -1,8 +1,8 @@
 Package: h5
 Type: Package
 Title: Interface to the 'HDF5' Library
-Version: 0.9.5
-Date: 2016-03-05
+Version: 0.9.6
+Date: 2016-05-08
 Authors@R: c(person("Mario", "Annau", role = c("aut", "cre"),
          email = "mario.annau@gmail.com"))
 Copyright: See COPYRIGHTS file.
@@ -20,14 +20,14 @@ SystemRequirements: libhdf5 (>= 1.8.x) with C++ interface
 Depends: R (>= 3.2)
 Imports: Rcpp (>= 0.11.5), methods
 LinkingTo: Rcpp
-Suggests: testthat, roxygen2, RCurl, highlight
+Suggests: testthat, roxygen2
 Collate: 'H5Location-Attribute.R' 'Attribute.R' 'CommonFG.R'
         'CommonFG-DataSet.R' 'CommonFG-Group.R' 'DataSet.R'
         'DataSpace.R' 'Dataset-Extend.R' 'Dataset-Subset.R' 'H5File.R'
         'H5Group.R' 'Helpers.R' 'RcppExports.R' 'h5-package.R'
 NeedsCompilation: yes
-Packaged: 2016-03-05 13:54:16 UTC; mario
+Packaged: 2016-05-08 19:21:21 UTC; mario
 Author: Mario Annau [aut, cre]
 Maintainer: Mario Annau <mario.annau@gmail.com>
 Repository: CRAN
-Date/Publication: 2016-03-05 18:20:46
+Date/Publication: 2016-05-09 06:25:03
