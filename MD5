@@ -1,4 +1,4 @@
-1e210df82ee9d17c1ad567d82478a2ff *DESCRIPTION
+b44711ffdbcf9577d942cd6527b41dc6 *DESCRIPTION
 c61f995c1fca80816f908ecea4fc139a *INSTALL
 50302128b0220cb1ba40f1cd7dcb7e21 *LICENSE
 3dbed2b5ef358b9502f46dab078ca586 *NAMESPACE
@@ -16,13 +16,17 @@ c7a022c5f97fffbb7f7d5d90b493ec4b *R/DataSpace.R
 9b6d46552ebe94a1fd785e69791b5c99 *R/Helpers.R
 336c92adc67e8f28ac1838844db1fd4f *R/RcppExports.R
 fdb49c26909fa56b35c6f363ecb32e19 *R/h5-package.R
+a8bb9261309388827e1e0e9edd753c4f *build/vignette.rds
+a93dc375777c52443d3172a21e3d221d *cleanup
 8265c6bedcf62ef051a4661714444e70 *configure
 b2622ce4462ca49ff4cb9bd82a15d951 *configure.ac
 d41d8cd98f00b204e9800998ecf8427e *configure.win
 2be28daacf78ab5f10c702856a13c2b2 *inst/COPYRIGHTS
-e2501fc1fcb722a122447500f88f5759 *inst/NEWS.Rd
+923e5d6763c452d524ababbe0f0540ca *inst/NEWS.Rd
 c57e313bdf814c0526dc65a02228a7c0 *inst/benchmark/benchmark-BigSet.R
-096d11cc2ccc0c4a1002810ef5354bae *inst/doc/h5.pdf
+b1854f0d63dad4867d31eb62195273a0 *inst/doc/h5.R
+13ee805647c12c0447db7b632004c18c *inst/doc/h5.Rnw
+84a36e3ae9b8b803f1ffd3eb7cbaea80 *inst/doc/h5.pdf
 28b6e2fc44b22419c138db5b465ac385 *inst/h5ex_t_enum.h5
 43fd25ed09b99b2b4cd851db125478ba *inst/include/h5.h
 45a4aa5af9b3f472e4c0f82433b30336 *inst/test-ascii-length-bug.h5
@@ -53,7 +57,7 @@ dff6059f0c31ded273d146fc5e81059a *src/File.cpp
 019bbaaff90fac761aaa6559a540271d *src/File.h
 bef7e1159872af0d3f04287b4536dee8 *src/Group.cpp
 7ee956a6f9805eeb7d4a9b1f4ead5cdb *src/Group.h
-e5f439340f5246b6f7017727a3edf80e *src/Helpers.cpp
+55ea5b457b093b10806e587a9ce0eb05 *src/Helpers.cpp
 0b9cb273182cf519f1356df1b070707a *src/Helpers.h
 60b61ab28ace9f59732aa9f228c747c8 *src/Makevars.in
 d81859090b24046566133f8cf3198c33 *src/Makevars.win
@@ -75,5 +79,5 @@ aa68690c267d5ea6b2ec0e5f2d05523f *tests/testthat/test-io.R
 69cba6481123d8ac8313c8dffb13d9e4 *tests/testthat/test-vlen.R
 c68c88f65c14120cc1b8ea9d42076ee3 *vignettes/ex-matlab.mat
 5e84f7f040164ac8c2f55a20416c35c5 *vignettes/ex-pandas.h5
-876bae9f8fdaee9f143de70d012d0764 *vignettes/h5.Rnw
+13ee805647c12c0447db7b632004c18c *vignettes/h5.Rnw
 6fce728c02f6e266411ae6c194b63613 *vignettes/h5.bib
