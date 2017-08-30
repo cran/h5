@@ -103,8 +103,7 @@ CharacterVector GetDataSetNames(XPtr<CommonFG> file, string path, bool recursive
 
 herr_t dset_info(hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data) {
   H5O_info_t infobuf;
-  H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
-  if(info->type == H5O_TYPE_DATASET) {
+  if(H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT) >= 0 && infobuf.type == H5O_TYPE_DATASET) {
     ((CharacterVector *) op_data)->push_back(name);
   }
   return 0;
@@ -144,12 +143,9 @@ herr_t dset_info_link(hid_t loc_id, const char *name, const H5L_info_t *info, vo
 
 // [[Rcpp::export]]
 bool Unlink(XPtr<CommonFG> file, string path) {
-  try {
-	  file->unlink(path.c_str());
-  } catch (Exception& error) {
-    Function warning("warning");
-    warning(error.getDetailMsg());
-    return false;
-  }
-  return true;
+    herr_t status = H5Ldelete( file->getLocId(), path.c_str(), H5P_DEFAULT);
+    if (status < 0) {
+      return false;
+    }
+    return true;
 }
